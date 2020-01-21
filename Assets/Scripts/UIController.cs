@@ -1,12 +1,17 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UIController : MonoBehaviour {
-    private GameController gameController;
+    private GameController _gameController;
+    private ReplayController _replayController;
     public GirlController girlController;
     public Color activeColor;
+
+    public GameObject replayScrollView;
+    public GameObject replayList;
+    public GameObject replayItem;
 
     public ColorPicker colorPicker;
 
@@ -16,6 +21,9 @@ public class UIController : MonoBehaviour {
     public Button changeClothColorBtn;
     public Button changeSkinColorBtn;
     public Button recordButton;
+    public Button playButton;
+    public Button whirlButton;
+    public Button gesticulateButton;
 
     private bool _isMoveBtnActive;
     private bool _isRotateBtnActive;
@@ -23,12 +31,15 @@ public class UIController : MonoBehaviour {
     private bool _isChangeClothColorBtnActive;
     private bool _isChangeSkinColorBtnActive;
     private bool _isRecordBtnActive;
+    private bool _isPlayButtonActive;
 
     void Start() {
-        gameController = GetComponent<GameController>();
+        _gameController = GetComponent<GameController>();
+        _replayController = GetComponent<ReplayController>();
         _isMoveBtnActive = false;
         _isRotateBtnActive = false;
         _isRecordBtnActive = false;
+        _isPlayButtonActive = false;
         _isChangeColorBtnActive = false;
         _isChangeClothColorBtnActive = false;
         _isChangeSkinColorBtnActive = false;
@@ -38,11 +49,11 @@ public class UIController : MonoBehaviour {
         if (_isMoveBtnActive) {
             _isMoveBtnActive = false;
             DeactivateButton(moveButton);
-            gameController.mode = GameController.Mode.ControlGirl;
+            _gameController.mode = GameController.Mode.ControlGirl;
             return;
         }
 
-        gameController.mode = GameController.Mode.MoveInterior;
+        _gameController.mode = GameController.Mode.MoveInterior;
         _isMoveBtnActive = true;
         _isRotateBtnActive = false;
         _isChangeColorBtnActive = false;
@@ -54,10 +65,10 @@ public class UIController : MonoBehaviour {
         if (_isRotateBtnActive) {
             _isRotateBtnActive = false;
             DeactivateButton(rotateButton);
-            gameController.mode = GameController.Mode.ControlGirl;
+            _gameController.mode = GameController.Mode.ControlGirl;
             return;
         }
-        gameController.mode = GameController.Mode.RotateInterior;
+        _gameController.mode = GameController.Mode.RotateInterior;
         _isRotateBtnActive = true;
         _isMoveBtnActive = false;
         _isChangeColorBtnActive = false;
@@ -75,23 +86,29 @@ public class UIController : MonoBehaviour {
             DeactivateButton(changeSkinColorBtn);
             ShowButton(moveButton);
             ShowButton(rotateButton);
+            ShowButton(whirlButton);
+            ShowButton(gesticulateButton);
+            ShowButton(recordButton);
+            ShowButton(playButton);
             HideButton(changeClothColorBtn);
             HideButton(changeSkinColorBtn);
             colorPicker.gameObject.SetActive(false);
-            gameController.mode = GameController.Mode.ControlGirl;
+            _gameController.mode = GameController.Mode.ControlGirl;
             return;
         }
-        gameController.mode = GameController.Mode.ChangeClothColor;
+        _gameController.mode = GameController.Mode.ChangeClothColor;
         _isChangeColorBtnActive = true;
         _isChangeClothColorBtnActive = true;
         _isMoveBtnActive = false;
         _isRotateBtnActive = false;
-        ActivateButton(changeColorButton);
-        ActivateButton(changeClothColorBtn);
-        DeactivateButton(moveButton);
-        DeactivateButton(rotateButton);
         HideButton(moveButton);
         HideButton(rotateButton);
+        HideButton(whirlButton);
+        HideButton(gesticulateButton);
+        HideButton(recordButton);
+        HideButton(playButton);
+        ActivateButton(changeColorButton);
+        ActivateButton(changeClothColorBtn);
         ShowButton(changeClothColorBtn);
         ShowButton(changeSkinColorBtn);
         colorPicker.gameObject.SetActive(true);
@@ -102,7 +119,7 @@ public class UIController : MonoBehaviour {
         if (_isChangeSkinColorBtnActive) {
             return;
         }
-        gameController.mode = GameController.Mode.ChangeSkinColor;
+        _gameController.mode = GameController.Mode.ChangeSkinColor;
         _isChangeClothColorBtnActive = false;
         _isChangeSkinColorBtnActive = true;
         ActivateButton(changeSkinColorBtn);
@@ -114,22 +131,78 @@ public class UIController : MonoBehaviour {
         if (_isChangeClothColorBtnActive) {
             return;
         }
-        gameController.mode = GameController.Mode.ChangeClothColor;
+        _gameController.mode = GameController.Mode.ChangeClothColor;
         _isChangeSkinColorBtnActive = false;
         _isChangeClothColorBtnActive = true;
         ActivateButton(changeClothColorBtn);
         DeactivateButton(changeSkinColorBtn);
         girlController.InitColor();
     }
-    
-    public void ClickRecordButton() {
+
+    public void ClickPlayReplay() {
+        if (_isPlayButtonActive) {
+            _gameController.mode = GameController.Mode.ControlGirl;
+            _isPlayButtonActive = false;
+            ShowButton(moveButton);
+            ShowButton(rotateButton);
+            ShowButton(whirlButton);
+            ShowButton(gesticulateButton);
+            ShowButton(recordButton);
+            ShowButton(changeColorButton);
+            replayScrollView.SetActive(false);
+            DeactivateButton(playButton);
+            return;
+        }
+        _gameController.mode = GameController.Mode.Play;
+        _isPlayButtonActive = true;
+        HideButton(moveButton);
+        HideButton(rotateButton);
+        HideButton(whirlButton);
+        HideButton(gesticulateButton);
+        HideButton(recordButton);
+        HideButton(changeColorButton);
+        ActivateButton(playButton);
+        
+        replayScrollView.SetActive(true);
+
+        DirectoryInfo dir = new DirectoryInfo(Application.persistentDataPath);
+        Debug.Log(dir.FullName);
+        foreach (var file in dir.GetFiles()) {
+            if (!file.Name.EndsWith(".replay")) continue;
+            GameObject newReplayItem = Instantiate(replayItem, replayList.transform);
+            Text replayItemText = newReplayItem.transform.GetComponentInChildren<Text>();
+            replayItemText.text = file.Name;
+            Button newReplayItemButton = newReplayItem.GetComponent<Button>();
+            newReplayItemButton.onClick.AddListener(() => {
+                _replayController.StartPlay(file.FullName);
+                replayScrollView.SetActive(false);
+            });
+        }
+
+        _gameController.mode = GameController.Mode.Play;
+    }
+
+    public void ClickRecordReplay() {
         if (_isRecordBtnActive) {
             _isRecordBtnActive = false;
+            ShowButton(changeColorButton);
+            ShowButton(playButton);
+            _gameController.mode = GameController.Mode.ControlGirl;
+
+            string replayName = DateTime.Now.Millisecond + ".replay";
+            _replayController.StopRecord(Application.persistentDataPath + "/" + replayName);
             DeactivateButton(recordButton);
             return;
         }
+
         _isRecordBtnActive = true;
+        HideButton(changeColorButton);
+        HideButton(playButton);
         ActivateButton(recordButton);
+        
+        _replayController.StartRecord();
+
+        _gameController.mode = GameController.Mode.Record;
     }
 
     private void ActivateButton(Button btn) {
@@ -141,6 +214,7 @@ public class UIController : MonoBehaviour {
     }
 
     private void HideButton(Button btn) {
+        DeactivateButton(btn);
         btn.gameObject.SetActive(false);
     }
     

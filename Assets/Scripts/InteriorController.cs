@@ -52,7 +52,6 @@ public class InteriorController : MonoBehaviour {
     }
 
     private void Move() {
-        Debug.Log("move move");
         Vector3 mousePos = Input.mousePosition;
         Vector3 newPos = raycaster.GetGroundWorldPointByClick(mousePos);
         newPos = new Vector3(newPos.x + offset.x, currObjTransform.position.y, newPos.z + offset.z);
@@ -60,7 +59,6 @@ public class InteriorController : MonoBehaviour {
     }
 
     private void Rotate() {
-        Debug.Log("rotate rotate");
         Vector3 mousePos = Input.mousePosition;
         Vector3 newPos = raycaster.GetGroundWorldPointByClick(mousePos);
         newPos = new Vector3(newPos.x, currObjTransform.position.y, newPos.z);

@@ -38,21 +38,25 @@ public class GirlController : MonoBehaviour {
     
     void Update()
     {
+        AnimatorClipInfo info = _animator.GetCurrentAnimatorClipInfo(0)[0];
+        if (info.clip.name == "Northern Soul Spin" || info.clip.name == "Standing Greeting") {
+            return;
+        }
         if (!_sit && _walk) {
             WalkToPoint();
         }
         
         if (_sit && _walk) {
             _animator.SetBool("StandUp", true);
-            AnimatorClipInfo info = _animator.GetCurrentAnimatorClipInfo(0)[0];
+            //AnimatorClipInfo info = _animator.GetCurrentAnimatorClipInfo(0)[0];
             if (info.clip.name == "Stand Up" || info.clip.name == "Sitting Idle") return;
             _animator.SetBool("StandUp", false);
             _sit = false;
             return;
         }
 
-        if (gameController.mode != GameController.Mode.ControlGirl) return;
-
+        if (gameController.mode != GameController.Mode.ControlGirl &&
+            gameController.mode != GameController.Mode.Record) return;
         if (Input.GetMouseButtonDown(0) || Input.touchCount > 0) {
             Vector3 clickPos = Input.mousePosition;
             GameObject clickObject = raycaster.GetObjectByClick(clickPos);
@@ -61,7 +65,7 @@ public class GirlController : MonoBehaviour {
                     _posWhereToGo = raycaster.GetGroundWorldPointByClick(clickPos);
                     _walk = true;
                 } else if (clickObject.name == "Chair" || clickObject.name == "Sofa") {
-                    _posWhereToGo = clickObject.name == "Sofa" 
+                    _posWhereToGo = clickObject.name == "Sofa"
                         ? GetPosInFrontBadObj(clickObject.transform, 0.6f)
                         : GetPosInFrontObj(clickObject.transform, 0.3f);
                     _objTransformForSit = clickObject.transform;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
@@ -9,7 +6,8 @@ public class GameController : MonoBehaviour
         Menu,
         ControlGirl, 
         MoveInterior, RotateInterior,
-        ChangeClothColor, ChangeSkinColor
+        ChangeClothColor, ChangeSkinColor,
+        Record, Play
     }
 
     public Mode mode;
